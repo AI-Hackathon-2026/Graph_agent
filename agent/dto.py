@@ -29,13 +29,13 @@ class GetTopicResponse(BaseModel):
 
 
 class BdLinksItem(BaseModel):
-    link: id
+    link_id: int
 
 
 class NewCourseItem(BaseModel):
     username: str
     requirements: str
-    links = list(BdLinksItem)
+    links: list[BdLinksItem]
 
 
 class NewCourseRequest(BaseModel):

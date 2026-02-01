@@ -20,15 +20,15 @@ async def get_graph(data: dict) -> dict:
             "request_id": data.get("request_id"),
             "message": "Incorrect body in request",
         }
-
     try:
-        async with aiohttp.ClientSession as session:
+        async with aiohttp.ClientSession() as session:
             async with session.get(
-                settings.orchestrator_server, json=request_data.model_dump()
+                settings.orchestrator_server + settings.get_graph_link,
+                json=request_data.model_dump(),
             ) as response:
                 response.raise_for_status()
-                response_date = GetGraphResponse(**await response.json())
-                return response_date.model_dump()
+                response_data = GetGraphResponse(**await response.json())
+                return response_data.model_dump()
     except ValidationError:
         return {
             "request_id": data.get("request_id"),
@@ -61,13 +61,14 @@ async def get_topic(data: dict) -> dict:
         }
 
     try:
-        async with aiohttp.ClientSession as session:
+        async with aiohttp.ClientSession() as session:
             async with session.get(
-                settings.orchestrator_server, json=request_data.model_dump()
+                settings.orchestrator_server + settings.get_topic_link,
+                json=request_data.model_dump(),
             ) as response:
                 response.raise_for_status()
-                response_date = GetTopicResponse(**await response.json())
-                return response_date.model_dump()
+                response_data = GetTopicResponse(**await response.json())
+                return response_data.model_dump()
     except ValidationError:
         return {
             "request_id": data.get("request_id"),
@@ -100,13 +101,14 @@ async def new_course(data: dict) -> dict:
         }
 
     try:
-        async with aiohttp.ClientSession as session:
+        async with aiohttp.ClientSession() as session:
             async with session.get(
-                settings.orchestrator_server, json=request_data.model_dump()
+                settings.orchestrator_server + settings.new_course_link,
+                json=request_data.model_dump(),
             ) as response:
                 response.raise_for_status()
-                response_date = NewCourseResponse(**await response.json())
-                return response_date.model_dump()
+                response_data = NewCourseResponse(**await response.json())
+                return response_data.model_dump()
     except ValidationError:
         return {
             "request_id": data.get("request_id"),

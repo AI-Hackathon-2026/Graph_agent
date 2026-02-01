@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from kafka import KafkaConsumer, KafkaProducer
 
@@ -8,11 +9,13 @@ from agent.config import settings
 consumer = KafkaConsumer(
     settings.consumer_kafka_topic,
     bootstrap_servers=settings.bootstrap_servers,
-    value_deserializer=settings.value_deserializer,
+    value_deserializer=lambda v: json.loads(v.decode("utf-8")),
+    key_deserializer=lambda k: k.decode("utf-8"),
 )
 producer = KafkaProducer(
     bootstrap_servers=settings.bootstrap_servers,
-    value_serializer=settings.value_serializer,
+    value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+    key_serializer=lambda k: str(k).encode("utf-8"),
 )
 
 
