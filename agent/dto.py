@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from agent.graph import Graph, Topic
+
 
 class GraphItem(BaseModel):
     graph_id: int
@@ -16,7 +18,8 @@ class GetGraphRequest(BaseModel):
 
 
 class GetGraphResponse(BaseModel):
-    zaglushka: int
+    request_id: int
+    message: Graph | str
 
 
 class GetTopicRequest(BaseModel):
@@ -25,7 +28,8 @@ class GetTopicRequest(BaseModel):
 
 
 class GetTopicResponse(BaseModel):
-    zaglushka: int
+    request_id: int
+    message: Topic | str
 
 
 class BdLinksItem(BaseModel):
@@ -44,7 +48,8 @@ class NewCourseRequest(BaseModel):
 
 
 class NewCourseResponse(BaseModel):
-    zaglushka: int
+    request_id: int
+    message: int | str
 
 
 class ChangeGraphRequest(BaseModel):
