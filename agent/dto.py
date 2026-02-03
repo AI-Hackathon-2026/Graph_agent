@@ -19,7 +19,7 @@ class GetGraphRequest(BaseModel):
 
 class GetGraphResponse(BaseModel):
     request_id: int
-    message: Graph | str
+    message: list[Graph] | str
 
 
 class GetTopicRequest(BaseModel):
