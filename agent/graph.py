@@ -7,6 +7,12 @@ class Topic(BaseModel):
     context: str
 
 
+class GraphNode(BaseModel):
+    node_id: int
+    topic_id: int
+    studied: bool
+
+
 class Graph(BaseModel):
     graph_id: int
-    graph: list[tuple[Topic, bool]]
+    nodes: list[GraphNode]

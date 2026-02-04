@@ -1,135 +1,65 @@
+from typing import Type
+
 import aiohttp
-from dto import (
-    GetGraphRequest,
-    GetGraphResponse,
-    GetTopicRequest,
-    GetTopicResponse,
-    NewCourseRequest,
-    NewCourseResponse,
-)
-from pydantic import ValidationError
+from dto import CreateCourseRequest  # noqa: F401
+from dto import CreateCourseResponse  # noqa: F401
+from dto import GetGraphsRequest  # noqa: F401
+from dto import GetGraphsResponse  # noqa: F401
+from dto import GetTopicRequest  # noqa: F401
+from dto import GetTopicResponse  # noqa: F401
+from pydantic import BaseModel, ValidationError
 
 from agent.config import settings
 
 
-async def get_graph(data: dict) -> dict:
-    try:
-        request_data = GetGraphRequest(**data)
-    except ValidationError:
-        return {
-            "request_id": data.get("request_id"),
-            "message": "Incorrect body in request",
-        }
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
+class OrchestratorClient:
+    def __init__(self):
+        self.session = aiohttp.ClientSession()
+
+    async def request(
+        self,
+        request_class: Type[BaseModel],
+        response_class: Type[BaseModel],
+        data: dict,
+    ) -> dict:
+        try:
+            request_data = request_class(**data)
+        except ValidationError:
+            return {
+                "request_id": data.get("request_id"),
+                "message": "Incorrect body in request",
+            }
+        try:
+            async with self.session.get(
                 settings.orchestrator_server + settings.get_graph_link,
                 json=request_data.model_dump(),
             ) as response:
                 response.raise_for_status()
-                response_data = GetGraphResponse(**await response.json())
+                response_data = response_class(**await response.json())
                 return response_data.model_dump()
-    except ValidationError:
-        return {
-            "request_id": data.get("request_id"),
-            "message": "Incorrect data from orchestrator",
-        }
+        except ValidationError:
+            return {
+                "request_id": data.get("request_id"),
+                "message": "Incorrect data from orchestrator",
+            }
 
-    except TimeoutError:
-        return {
-            "request_id": data.get("request_id"),
-            "message": "Timeout while calling orchestrator",
-        }
+        except TimeoutError:
+            return {
+                "request_id": data.get("request_id"),
+                "message": "Timeout while calling orchestrator",
+            }
 
-    except aiohttp.ClientResponseError as e:
-        return {
-            "request_id": data.get("request_id"),
-            "message": f"HTTP error: {e.status}",
-        }
+        except aiohttp.ClientResponseError as e:
+            return {
+                "request_id": data.get("request_id"),
+                "message": f"HTTP error: {e.status}",
+            }
 
-    except aiohttp.ClientError as e:
-        return {"request_id": data.get("request_id"), "message": f"Network error: {e}"}
-
-
-async def get_topic(data: dict) -> dict:
-    try:
-        request_data = GetTopicRequest(**data)
-    except ValidationError:
-        return {
-            "request_id": data.get("request_id"),
-            "message": "Incorrect body in request",
-        }
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                settings.orchestrator_server + settings.get_topic_link,
-                json=request_data.model_dump(),
-            ) as response:
-                response.raise_for_status()
-                response_data = GetTopicResponse(**await response.json())
-                return response_data.model_dump()
-    except ValidationError:
-        return {
-            "request_id": data.get("request_id"),
-            "message": "Incorrect data from orchestrator",
-        }
-
-    except TimeoutError:
-        return {
-            "request_id": data.get("request_id"),
-            "message": "Timeout while calling orchestrator",
-        }
-
-    except aiohttp.ClientResponseError as e:
-        return {
-            "request_id": data.get("request_id"),
-            "message": f"HTTP error: {e.status}",
-        }
-
-    except aiohttp.ClientError as e:
-        return {"request_id": data.get("request_id"), "message": f"Network error: {e}"}
+        except aiohttp.ClientError as e:
+            return {
+                "request_id": data.get("request_id"),
+                "message": f"Network error: {e}",
+            }
 
 
-async def new_course(data: dict) -> dict:
-    try:
-        request_data = NewCourseRequest(**data)
-    except ValidationError:
-        return {
-            "request_id": data.get("request_id"),
-            "message": "Incorrect body in request",
-        }
-
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                settings.orchestrator_server + settings.new_course_link,
-                json=request_data.model_dump(),
-            ) as response:
-                response.raise_for_status()
-                response_data = NewCourseResponse(**await response.json())
-                return response_data.model_dump()
-    except ValidationError:
-        return {
-            "request_id": data.get("request_id"),
-            "message": "Incorrect data from orchestrator",
-        }
-
-    except TimeoutError:
-        return {
-            "request_id": data.get("request_id"),
-            "message": "Timeout while calling orchestrator",
-        }
-
-    except aiohttp.ClientResponseError as e:
-        return {
-            "request_id": data.get("request_id"),
-            "message": f"HTTP error: {e.status}",
-        }
-
-    except aiohttp.ClientError as e:
-        return {"request_id": data.get("request_id"), "message": f"Network error: {e}"}
-
-
-async def change_graph(data: dict) -> dict:
-    pass
+orchestrator_client = OrchestratorClient()

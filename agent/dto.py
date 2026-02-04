@@ -12,14 +12,14 @@ class TopicItem(BaseModel):
     topic_id: int
 
 
-class GetGraphRequest(BaseModel):
+class GetGraphsRequest(BaseModel):
     request_id: int
     message: list[GraphItem]
 
 
-class GetGraphResponse(BaseModel):
+class GetGraphsResponse(BaseModel):
     request_id: int
-    message: list[Graph] | str
+    message: list[Graph]
 
 
 class GetTopicRequest(BaseModel):
@@ -29,32 +29,24 @@ class GetTopicRequest(BaseModel):
 
 class GetTopicResponse(BaseModel):
     request_id: int
-    message: Topic | str
+    message: Topic
 
 
 class BdLinksItem(BaseModel):
     link_id: int
 
 
-class NewCourseItem(BaseModel):
+class CreateCourseItem(BaseModel):
     username: str
     requirements: str
     links: list[BdLinksItem]
 
 
-class NewCourseRequest(BaseModel):
+class CreateCourseRequest(BaseModel):
     request_id: int
-    message: NewCourseItem
+    message: CreateCourseItem
 
 
-class NewCourseResponse(BaseModel):
+class CreateCourseResponse(BaseModel):
     request_id: int
-    message: int | str
-
-
-class ChangeGraphRequest(BaseModel):
-    pass
-
-
-class ChangeGraphResponse(BaseModel):
-    pass
+    message: int
