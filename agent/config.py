@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     get_graph_key: str = "get_graph"
     get_topic_key: str = "get_topic"
-    new_course_key: str = "new_course"
+    new_course_key: str = "create_course"
 
 
 settings = Settings()

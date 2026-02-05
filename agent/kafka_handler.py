@@ -28,31 +28,42 @@ producer = KafkaProducer(
 
 
 async def main():
+    await orchestrator_client.start_http_session()
     for msg in consumer:
         match msg.key:
             case settings.get_graph_key:
-                value = await orchestrator_client.request(
-                    request_class=GetGraphsRequest,
-                    response_class=GetGraphsResponse,
-                    data=msg.value,
-                )
-            case settings.get_topic_link:
-                value = await orchestrator_client.request(
-                    request_class=GetTopicRequest,
-                    response_class=GetTopicResponse,
-                    data=msg.value,
-                )
+                request_class = GetGraphsRequest
+                response_class = GetGraphsResponse
+                end_point = "/get_graphs"
+                http_method = "get"
+            case settings.get_topic_key:
+                request_class = GetTopicRequest
+                response_class = GetTopicResponse
+                end_point = "/get_topic"
+                http_method = "get"
             case settings.new_course_key:
-                value = await orchestrator_client.request(
-                    request_class=CreateCourseRequest,
-                    response_class=CreateCourseResponse,
-                    data=msg.value,
-                )
+                request_class = CreateCourseRequest
+                response_class = CreateCourseResponse
+                end_point = "/create_new_course"
+                http_method = "post"
             case _:
-                value = {
-                    "request_id": msg.value["request_id"],
-                    "message": "Incorrect key in message",
-                }
+                request_class = None
+                response_class = None
+                end_point = ""
+                http_method = ""
+        if response_class is None and response_class is None:
+            value = {
+                "request_id": msg.value["request_id"],
+                "message": "Incorrect key in message",
+            }
+        else:
+            value = await orchestrator_client.request(
+                request_class=request_class,
+                response_class=response_class,
+                data=msg.value,
+                end_point=end_point,
+                http_method=http_method,
+            )
         await send_message(settings.producer_kafka_topic, msg.key, value)
 
 

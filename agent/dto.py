@@ -4,11 +4,11 @@ from agent.graph import Graph, Topic
 
 
 class GraphItem(BaseModel):
-    graph_id: int
+    graph_id: str
 
 
 class TopicItem(BaseModel):
-    graph_id: int
+    graph_id: str
     topic_id: int
 
 
@@ -19,7 +19,7 @@ class GetGraphsRequest(BaseModel):
 
 class GetGraphsResponse(BaseModel):
     request_id: int
-    message: list[Graph]
+    message: list[Graph] | str
 
 
 class GetTopicRequest(BaseModel):
@@ -29,7 +29,7 @@ class GetTopicRequest(BaseModel):
 
 class GetTopicResponse(BaseModel):
     request_id: int
-    message: Topic
+    message: Topic | str
 
 
 class BdLinksItem(BaseModel):
@@ -49,4 +49,4 @@ class CreateCourseRequest(BaseModel):
 
 class CreateCourseResponse(BaseModel):
     request_id: int
-    message: int
+    message: int | str

@@ -4,7 +4,7 @@ from pydantic import BaseModel
 class Topic(BaseModel):
     topic_id: int
     title: str
-    context: str
+    topic_content: str
 
 
 class GraphNode(BaseModel):
@@ -14,5 +14,5 @@ class GraphNode(BaseModel):
 
 
 class Graph(BaseModel):
-    graph_id: int
+    graph_id: str
     nodes: list[GraphNode]
