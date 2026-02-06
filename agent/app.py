@@ -1,6 +1,8 @@
+import os
 from typing import Type
 
 import aiohttp
+from langfuse import Langfuse, observe
 from pydantic import BaseModel, ValidationError
 
 from agent.config import settings
@@ -11,6 +13,12 @@ from agent.dto import GetGraphsResponse  # noqa: F401
 from agent.dto import GetTopicRequest  # noqa: F401
 from agent.dto import GetTopicResponse  # noqa: F401
 
+langfuse = Langfuse(
+    secret_key=os.environ.get("LANGFUSE_SECRET_KEY"),
+    public_key=os.environ.get("LANGFUSE_PUBLIC_KEY"),
+    host=settings.LANGFUSE_SERVER,
+)
+
 
 class OrchestratorClient:
     session: aiohttp.ClientSession
@@ -18,6 +26,7 @@ class OrchestratorClient:
     async def start_http_session(self):
         self.session = aiohttp.ClientSession()
 
+    @observe(name="request")
     async def request(
         self,
         request_class: Type[BaseModel],
@@ -36,7 +45,7 @@ class OrchestratorClient:
         try:
             if http_method == "get":
                 async with self.session.get(
-                    settings.orchestrator_server + end_point,
+                    settings.ORCHESTRATOR_SERVER + end_point,
                     json=request_data.model_dump(),
                 ) as response:
                     response.raise_for_status()
@@ -44,7 +53,7 @@ class OrchestratorClient:
                     return response_data.model_dump()
             else:
                 async with self.session.post(
-                    settings.orchestrator_server + end_point,
+                    settings.ORCHESTRATOR_SERVER + end_point,
                     json=request_data.model_dump(),
                 ) as response:
                     response.raise_for_status()

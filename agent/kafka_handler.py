@@ -1,7 +1,10 @@
 import asyncio
 import json
+import os
 
 from kafka import KafkaConsumer, KafkaProducer
+from kafka.errors import KafkaError
+from langfuse import Langfuse, observe
 
 from agent.app import orchestrator_client
 from agent.config import settings
@@ -14,14 +17,20 @@ from agent.dto import (
     GetTopicResponse,
 )
 
+langfuse = Langfuse(
+    secret_key=os.environ.get("LANGFUSE_SECRET_KEY"),
+    public_key=os.environ.get("LANGFUSE_PUBLIC_KEY"),
+    host=settings.LANGFUSE_SERVER,
+)
+
 consumer = KafkaConsumer(
-    settings.consumer_kafka_topic,
-    bootstrap_servers=settings.bootstrap_servers,
+    settings.CONSUMER_KAFKA_TOPIC,
+    bootstrap_servers=settings.BOOTSTRAP_SERVER,
     value_deserializer=lambda v: json.loads(v.decode("utf-8")),
     key_deserializer=lambda k: k.decode("utf-8"),
 )
 producer = KafkaProducer(
-    bootstrap_servers=settings.bootstrap_servers,
+    bootstrap_servers=settings.BOOTSTRAP_SERVER,
     value_serializer=lambda v: json.dumps(v).encode("utf-8"),
     key_serializer=lambda k: str(k).encode("utf-8"),
 )
@@ -31,17 +40,17 @@ async def main():
     await orchestrator_client.start_http_session()
     for msg in consumer:
         match msg.key:
-            case settings.get_graph_key:
+            case settings.GET_GRAPH_KEY:
                 request_class = GetGraphsRequest
                 response_class = GetGraphsResponse
                 end_point = "/get_graphs"
                 http_method = "get"
-            case settings.get_topic_key:
+            case settings.GET_TOPIC_KEY:
                 request_class = GetTopicRequest
                 response_class = GetTopicResponse
                 end_point = "/get_topic"
                 http_method = "get"
-            case settings.new_course_key:
+            case settings.CREATE_COURSE_KEY:
                 request_class = CreateCourseRequest
                 response_class = CreateCourseResponse
                 end_point = "/create_new_course"
@@ -64,15 +73,19 @@ async def main():
                 end_point=end_point,
                 http_method=http_method,
             )
-        await send_message(settings.producer_kafka_topic, msg.key, value)
+        await send_message(settings.PRODUCER_KAFKA_TOPIC, msg.key, value)
 
 
-async def send_message(topic: str, key: str, value: dict):
-    producer.send(
-        topic=topic,
-        key=key,
-        value=value,
-    )
+@observe(name="send_message")
+async def send_message(topic: str, key: str, value: dict) -> None | str:
+    try:
+        producer.send(
+            topic=topic,
+            key=key,
+            value=value,
+        )
+    except KafkaError as e:
+        return f"Kafka error: {e}"
 
 
 if __name__ == "__main__":
