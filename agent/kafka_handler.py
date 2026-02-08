@@ -1,13 +1,12 @@
 import asyncio
 import json
-import os
 
 from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import KafkaError
 from langfuse import Langfuse, observe
 
 from agent.app import orchestrator_client
-from agent.config import settings
+from agent.config import application_hosts_setting, kafka_settings, langfuse_settings
 from agent.dto import (
     CreateCourseRequest,
     CreateCourseResponse,
@@ -18,19 +17,20 @@ from agent.dto import (
 )
 
 langfuse = Langfuse(
-    secret_key=os.environ.get("LANGFUSE_SECRET_KEY"),
-    public_key=os.environ.get("LANGFUSE_PUBLIC_KEY"),
-    host=settings.LANGFUSE_SERVER,
+    secret_key=langfuse_settings.SECRET_KEY,
+    public_key=langfuse_settings.PUBLIC_KEY,
+    host=langfuse_settings.LANGFUSE_SERVER,
 )
 
 consumer = KafkaConsumer(
-    settings.CONSUMER_KAFKA_TOPIC,
-    bootstrap_servers=settings.BOOTSTRAP_SERVER,
+    kafka_settings.CONSUMER_KAFKA_TOPIC,
+    bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
     value_deserializer=lambda v: json.loads(v.decode("utf-8")),
     key_deserializer=lambda k: k.decode("utf-8"),
 )
+
 producer = KafkaProducer(
-    bootstrap_servers=settings.BOOTSTRAP_SERVER,
+    bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
     value_serializer=lambda v: json.dumps(v).encode("utf-8"),
     key_serializer=lambda k: str(k).encode("utf-8"),
 )
@@ -40,17 +40,17 @@ async def main():
     await orchestrator_client.start_http_session()
     for msg in consumer:
         match msg.key:
-            case settings.GET_GRAPH_KEY:
+            case kafka_settings.GET_GRAPH_KEY:
                 request_class = GetGraphsRequest
                 response_class = GetGraphsResponse
                 end_point = "/get_graphs"
                 http_method = "get"
-            case settings.GET_TOPIC_KEY:
+            case kafka_settings.GET_TOPIC_KEY:
                 request_class = GetTopicRequest
                 response_class = GetTopicResponse
                 end_point = "/get_topic"
                 http_method = "get"
-            case settings.CREATE_COURSE_KEY:
+            case kafka_settings.CREATE_COURSE_KEY:
                 request_class = CreateCourseRequest
                 response_class = CreateCourseResponse
                 end_point = "/create_new_course"
@@ -73,7 +73,7 @@ async def main():
                 end_point=end_point,
                 http_method=http_method,
             )
-        await send_message(settings.PRODUCER_KAFKA_TOPIC, msg.key, value)
+        await send_message(kafka_settings.PRODUCER_KAFKA_TOPIC, msg.key, value)
 
 
 @observe(name="send_message")
@@ -84,6 +84,7 @@ async def send_message(topic: str, key: str, value: dict) -> None | str:
             key=key,
             value=value,
         )
+        return "The message has been sent"
     except KafkaError as e:
         return f"Kafka error: {e}"
 

@@ -1,22 +1,23 @@
-import os
-from typing import Type
+from typing import Any, Callable, Type, cast
 
 import aiohttp
 from langfuse import Langfuse, observe
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 
-from agent.config import settings
-from agent.dto import CreateCourseRequest  # noqa: F401
-from agent.dto import CreateCourseResponse  # noqa: F401
-from agent.dto import GetGraphsRequest  # noqa: F401
-from agent.dto import GetGraphsResponse  # noqa: F401
-from agent.dto import GetTopicRequest  # noqa: F401
-from agent.dto import GetTopicResponse  # noqa: F401
+from agent.config import application_hosts_setting, langfuse_settings
+from agent.dto import (
+    CreateCourseRequest,
+    CreateCourseResponse,
+    GetGraphsRequest,
+    GetGraphsResponse,
+    GetTopicRequest,
+    GetTopicResponse,
+)
 
 langfuse = Langfuse(
-    secret_key=os.environ.get("LANGFUSE_SECRET_KEY"),
-    public_key=os.environ.get("LANGFUSE_PUBLIC_KEY"),
-    host=settings.LANGFUSE_SERVER,
+    secret_key=langfuse_settings.SECRET_KEY,
+    public_key=langfuse_settings.PUBLIC_KEY,
+    host=langfuse_settings.LANGFUSE_SERVER,
 )
 
 
@@ -29,58 +30,65 @@ class OrchestratorClient:
     @observe(name="request")
     async def request(
         self,
-        request_class: Type[BaseModel],
-        response_class: Type[BaseModel],
-        end_point: str,
-        data: dict,
+        request_class: Type[CreateCourseRequest | GetGraphsRequest | GetTopicRequest],
+        response_class: Type[
+            CreateCourseResponse | GetGraphsResponse | GetTopicResponse
+        ],
+        url: str,
+        body: dict,
         http_method: str,
     ) -> dict:
         try:
-            request_data = request_class(**data)
+            request_class(**body)
         except ValidationError:
             return {
-                "request_id": data.get("request_id"),
+                "request_id": body["request_id"],
                 "message": "Incorrect body in request",
             }
+
+        method_mapping = {
+            "get": self.session.get,
+            "post": self.session.post,
+        }
         try:
-            if http_method == "get":
-                async with self.session.get(
-                    settings.ORCHESTRATOR_SERVER + end_point,
-                    json=request_data.model_dump(),
-                ) as response:
-                    response.raise_for_status()
-                    response_data = response_class(**await response.json())
-                    return response_data.model_dump()
-            else:
-                async with self.session.post(
-                    settings.ORCHESTRATOR_SERVER + end_point,
-                    json=request_data.model_dump(),
-                ) as response:
-                    response.raise_for_status()
-                    response_data = response_class(**await response.json())
-                    return response_data.model_dump()
+            session_method = cast(
+                Callable[..., Any], method_mapping.get(http_method.lower())
+            )
+            if session_method is None:
+                raise ValueError(f"Unsupported HTTP method: {http_method}")
+            async with session_method(
+                application_hosts_setting.ORCHESTRATOR_SERVER + url, json=body
+            ) as response:
+                response.raise_for_status()
+                response_data = response_class(**await response.json())
+                return response_data.model_dump()
+
         except ValidationError:
             return {
-                "request_id": data.get("request_id"),
-                "message": "Incorrect data from orchestrator",
+                "request_id": body["request_id"],
+                "message": None,
+                "status": "Incorrect data from orchestrator",
             }
 
         except TimeoutError:
             return {
-                "request_id": data.get("request_id"),
-                "message": "Timeout while calling orchestrator",
+                "request_id": body["request_id"],
+                "message": None,
+                "status": "Timeout while calling orchestrator",
             }
 
         except aiohttp.ClientResponseError as e:
             return {
-                "request_id": data.get("request_id"),
-                "message": f"HTTP error: {e.status}",
+                "request_id": body["request_id"],
+                "message": None,
+                "status": f"HTTP error: {e.status}",
             }
 
         except aiohttp.ClientError as e:
             return {
-                "request_id": data.get("request_id"),
-                "message": f"Network error: {e}",
+                "request_id": body["request_id"],
+                "message": None,
+                "status": f"Network error: {e}",
             }
 
 
