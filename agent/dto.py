@@ -20,7 +20,7 @@ class GetGraphsRequest(BaseModel):
 class GetGraphsResponse(BaseModel):
     request_id: str
     message: list[Graph] | None
-    status: str
+    status: int
 
 
 class GetTopicRequest(BaseModel):
@@ -31,7 +31,7 @@ class GetTopicRequest(BaseModel):
 class GetTopicResponse(BaseModel):
     request_id: str
     message: Topic | None
-    status: str
+    status: int
 
 
 class BdLinksItem(BaseModel):
@@ -52,10 +52,9 @@ class CreateCourseRequest(BaseModel):
 class CreateCourseResponseItem(BaseModel):
     username: str
     graph_id: str | None
-    code: int
 
 
 class CreateCourseResponse(BaseModel):
     request_id: str
     message: CreateCourseResponseItem | None
-    status: str
+    status: int

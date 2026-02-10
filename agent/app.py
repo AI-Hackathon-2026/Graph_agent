@@ -1,3 +1,4 @@
+import enum
 from typing import Any, Callable, Type, cast
 
 import aiohttp
@@ -21,6 +22,12 @@ langfuse = Langfuse(
 )
 
 
+class ResponseCodes(enum.Enum):
+    OK = 200
+    INTERNAL_ERROR = 500
+    BAD_REQUEST = 400
+
+
 class OrchestratorClient:
     session: aiohttp.ClientSession
 
@@ -37,14 +44,17 @@ class OrchestratorClient:
         url: str,
         body: dict,
         http_method: str,
-    ) -> dict:
+    ) -> CreateCourseResponse | GetGraphsResponse | GetTopicResponse:
         try:
             request_class(**body)
         except ValidationError:
-            return {
-                "request_id": body["request_id"],
-                "message": "Incorrect body in request",
-            }
+            return response_class(
+                **{
+                    "request_id": body["request_id"],
+                    "message": None,
+                    "status": ResponseCodes.BAD_REQUEST.value,
+                }
+            )
 
         method_mapping = {
             "get": self.session.get,
@@ -60,36 +70,27 @@ class OrchestratorClient:
                 application_hosts_setting.ORCHESTRATOR_SERVER + url, json=body
             ) as response:
                 response.raise_for_status()
-                response_data = response_class(**await response.json())
-                return response_data.model_dump()
+                response = response_class(**await response.json())
+                return response
 
         except ValidationError:
-            return {
-                "request_id": body["request_id"],
-                "message": None,
-                "status": "Incorrect data from orchestrator",
-            }
+            message = (None,)
+            status = 500
 
         except TimeoutError:
-            return {
-                "request_id": body["request_id"],
-                "message": None,
-                "status": "Timeout while calling orchestrator",
-            }
+            message = (None,)
+            status = 500
 
-        except aiohttp.ClientResponseError as e:
-            return {
-                "request_id": body["request_id"],
-                "message": None,
-                "status": f"HTTP error: {e.status}",
-            }
+        except aiohttp.ClientResponseError:
+            message = (None,)
+            status = 500
 
-        except aiohttp.ClientError as e:
-            return {
-                "request_id": body["request_id"],
-                "message": None,
-                "status": f"Network error: {e}",
-            }
+        except aiohttp.ClientError:
+            message = (None,)
+            status = 500
+        return response_class(
+            **{"request_id": body["request_id"], "message": message, "status": status}
+        )
 
 
 orchestrator_client = OrchestratorClient()
