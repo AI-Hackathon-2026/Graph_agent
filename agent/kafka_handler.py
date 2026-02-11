@@ -94,7 +94,6 @@ class KafkaHandler:
         except KafkaError as e:
             return f"Kafka error: {e}"
 
-
 if __name__ == "__main__":
     kafka_handler = KafkaHandler()
     asyncio.run(kafka_handler.main())

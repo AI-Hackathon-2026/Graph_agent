@@ -14,10 +14,10 @@ class GraphNode(BaseModel):
     topic_id: str
     is_studied: bool
     is_major: bool
-    prev_node: str | None
-    next_node: str | None
+    prev_node_id: str | None
+    next_node_id: str | None
 
 
 class Graph(BaseModel):
     graph_id: str
-    first_node: str
+    first_node_id: str
