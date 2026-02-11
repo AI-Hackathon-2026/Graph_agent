@@ -1,4 +1,3 @@
-import enum
 from typing import Any, Callable, Type, cast
 
 import aiohttp
@@ -14,18 +13,13 @@ from agent.dto import (
     GetTopicRequest,
     GetTopicResponse,
 )
+from agent.dto import ResponseCodes
 
 langfuse = Langfuse(
     secret_key=langfuse_settings.SECRET_KEY,
     public_key=langfuse_settings.PUBLIC_KEY,
     host=langfuse_settings.LANGFUSE_SERVER,
 )
-
-
-class ResponseCodes(enum.Enum):
-    OK = 200
-    INTERNAL_ERROR = 500
-    BAD_REQUEST = 400
 
 
 class OrchestratorClient:
@@ -52,7 +46,7 @@ class OrchestratorClient:
                 **{
                     "request_id": body["request_id"],
                     "message": None,
-                    "status": ResponseCodes.BAD_REQUEST.value,
+                    "status": ResponseCodes.BAD_REQUEST
                 }
             )
 
@@ -75,19 +69,19 @@ class OrchestratorClient:
 
         except ValidationError:
             message = (None,)
-            status = 500
+            status = ResponseCodes.INTERNAL_ERROR
 
         except TimeoutError:
-            message = (None,)
-            status = 500
+            message = None
+            status = ResponseCodes.INTERNAL_ERROR
 
         except aiohttp.ClientResponseError:
-            message = (None,)
-            status = 500
+            message = None
+            status = ResponseCodes.INTERNAL_ERROR
 
         except aiohttp.ClientError:
-            message = (None,)
-            status = 500
+            message = None
+            status = ResponseCodes.INTERNAL_ERROR
         return response_class(
             **{"request_id": body["request_id"], "message": message, "status": status}
         )
