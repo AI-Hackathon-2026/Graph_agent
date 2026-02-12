@@ -76,11 +76,14 @@ class KafkaHandler:
                 value = await orchestrator_client.request(
                     request_class=request_class,
                     response_class=response_class,
-                    data=msg.value,
-                    end_point=end_point,
+                    body=msg.value,
+                    url=end_point,
                     http_method=http_method,
                 )
-            await self.send_message(kafka_settings.PRODUCER_KAFKA_TOPIC, msg.key, value)
+            print(value.model_dump())
+            await self.send_message(
+                kafka_settings.PRODUCER_KAFKA_TOPIC, msg.key, value.model_dump_json()
+            )
 
     @observe(name="send_message")
     async def send_message(self, topic: str, key: str, value: dict) -> None | str:
@@ -93,6 +96,7 @@ class KafkaHandler:
             return "The message has been sent"
         except KafkaError as e:
             return f"Kafka error: {e}"
+
 
 if __name__ == "__main__":
     kafka_handler = KafkaHandler()
