@@ -12,12 +12,21 @@ class Topic(BaseModel):
 class GraphNode(BaseModel):
     node_id: str
     topic_id: str
-    studied: bool
+    is_studied: bool
     is_major: bool
-    prev_node: GraphNode | None
-    next_node: GraphNode | None
+    prev_node_id: str | None
+    next_node_id: str | None
+
+
+class UsersGraphNode(BaseModel):
+    node_id: str
+    topic_id: str
+    title: str
+    is_studied: bool
+    is_major: bool
+    next_node_id: str | None
 
 
 class Graph(BaseModel):
     graph_id: str
-    first_node: GraphNode
+    nodes: list[UsersGraphNode]
