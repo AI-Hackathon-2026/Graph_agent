@@ -11,6 +11,7 @@ class Topic(BaseModel):
 
 class GraphNode(BaseModel):
     node_id: str
+    graph_id: str
     topic_id: str
     is_studied: bool
     is_major: bool
