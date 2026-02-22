@@ -1,9 +1,8 @@
 import asyncio
 import json
-import time
 
 from kafka import KafkaConsumer, KafkaProducer
-from kafka.errors import KafkaError, NoBrokersAvailable
+from kafka.errors import KafkaError
 from langfuse import Langfuse, observe
 
 from agent.app import orchestrator_client
@@ -26,22 +25,17 @@ langfuse = Langfuse(
 
 class KafkaHandler:
     def __init__(self):
-        while True:
-            try:
-                self.consumer = KafkaConsumer(
-                    kafka_settings.CONSUMER_KAFKA_TOPIC,
-                    bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
-                    value_deserializer=lambda v: json.loads(v.decode("utf-8")),
-                    key_deserializer=lambda k: k.decode("utf-8"),
-                )
-                self.producer = KafkaProducer(
-                    bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
-                    value_serializer=lambda v: json.dumps(v).encode("utf-8"),
-                    key_serializer=lambda k: str(k).encode("utf-8"),
-                )
-                break
-            except NoBrokersAvailable:
-                time.sleep(3)
+        self.consumer = KafkaConsumer(
+            kafka_settings.CONSUMER_KAFKA_TOPIC,
+            bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
+            value_deserializer=lambda v: json.loads(v.decode("utf-8")),
+            key_deserializer=lambda k: k.decode("utf-8"),
+        )
+        self.producer = KafkaProducer(
+            bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
+            value_serializer=lambda v: json.dumps(v).encode("utf-8"),
+            key_serializer=lambda k: str(k).encode("utf-8"),
+        )
 
     async def main(self):
         await orchestrator_client.start_http_session()
@@ -80,7 +74,6 @@ class KafkaHandler:
                     url=end_point,
                     http_method=http_method,
                 )
-            print(value.model_dump())
             await self.send_message(
                 kafka_settings.PRODUCER_KAFKA_TOPIC, msg.key, value.model_dump_json()
             )
