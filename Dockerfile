@@ -9,6 +9,6 @@ FROM python:3.12-slim
 COPY --from=builder /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
 WORKDIR /app
-COPY . .
+COPY /agent /app/agent
 EXPOSE 6767
 CMD ["python", "-m", "agent.kafka_handler"]
