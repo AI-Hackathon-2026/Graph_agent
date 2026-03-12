@@ -72,7 +72,7 @@ class KafkaHandler:
                 value = await orchestrator_client.request(
                     request_class=request_class,
                     response_class=response_class,
-                    body=msg.value,
+                    body=json.loads(msg.value["message"].decode("utf-8")),
                     url=end_point,
                     http_method=http_method,
                 )
