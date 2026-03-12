@@ -64,12 +64,7 @@ class KafkaHandler:
                     response_class = None
                     end_point = ""
                     http_method = ""
-            if response_class is None and response_class is None:
-                value = {
-                    "request_id": msg.value["request_id"],
-                    "message": "Incorrect key in message",
-                }
-            else:
+            if response_class is not None and response_class is not None:
                 value = await orchestrator_client.request(
                     request_class=request_class,
                     response_class=response_class,
@@ -82,9 +77,11 @@ class KafkaHandler:
                     url=end_point,
                     http_method=http_method,
                 )
-            await self.send_message(
-                kafka_settings.PRODUCER_KAFKA_TOPIC, msg.key, value.model_dump_json()
-            )
+                await self.send_message(
+                    kafka_settings.PRODUCER_KAFKA_TOPIC,
+                    msg.key,
+                    value.model_dump_json(),
+                )
 
     @observe(name="send_message")
     async def send_message(self, topic: str, key: str, value: Any) -> None | str:
