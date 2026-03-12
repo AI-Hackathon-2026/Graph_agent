@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import json
 
 from kafka import KafkaConsumer, KafkaProducer
@@ -72,7 +73,11 @@ class KafkaHandler:
                 value = await orchestrator_client.request(
                     request_class=request_class,
                     response_class=response_class,
-                    body=json.loads(bytes(msg.value["message"]).decode("utf-8")),
+                    body=json.loads(
+                        base64.b64decode(
+                            json.loads(bytes(msg.value["message"]).decode("utf-8")),
+                        ).decode("utf-8")
+                    ),
                     url=end_point,
                     http_method=http_method,
                 )
