@@ -92,7 +92,7 @@ class KafkaHandler:
             self.producer.send(
                 topic=topic,
                 key=key,
-                value=value,
+                value=value.encode("utf-8"),
             )
             print(
                 f"The message has been sent. topic: {topic}, key: {key}, value: {value}"
