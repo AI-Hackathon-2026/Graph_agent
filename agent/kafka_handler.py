@@ -83,7 +83,7 @@ class KafkaHandler:
                     http_method=http_method,
                 )
             await self.send_message(
-                kafka_settings.PRODUCER_KAFKA_TOPIC, msg.key, value.model_dump_json()
+                kafka_settings.PRODUCER_KAFKA_TOPIC, msg.key, value.model_dump()
             )
 
     @observe(name="send_message")
