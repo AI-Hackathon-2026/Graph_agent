@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import json
+from typing import Any
 
 from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import KafkaError
@@ -34,7 +35,6 @@ class KafkaHandler:
         )
         self.producer = KafkaProducer(
             bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
-            value_serializer=lambda v: json.dumps(v).encode("utf-8"),
             key_serializer=lambda k: str(k).encode("utf-8"),
         )
         print(f"Ready to work, consume {kafka_settings.CONSUMER_KAFKA_TOPIC} topic")
@@ -83,11 +83,11 @@ class KafkaHandler:
                     http_method=http_method,
                 )
             await self.send_message(
-                kafka_settings.PRODUCER_KAFKA_TOPIC, msg.key, value.model_dump()
+                kafka_settings.PRODUCER_KAFKA_TOPIC, msg.key, value.model_dump_json()
             )
 
     @observe(name="send_message")
-    async def send_message(self, topic: str, key: str, value: dict) -> None | str:
+    async def send_message(self, topic: str, key: str, value: Any) -> None | str:
         try:
             self.producer.send(
                 topic=topic,
