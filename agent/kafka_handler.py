@@ -73,9 +73,12 @@ class KafkaHandler:
                 value = await orchestrator_client.request(
                     request_class=request_class,
                     response_class=response_class,
-                    body=json.loads(
-                        base64.b64decode(msg.value["message"]).decode("utf-8")
-                    ),
+                    body={
+                        "request_id": msg.value["request_id"],
+                        "message": json.loads(
+                            base64.b64decode(msg.value["message"]).decode("utf-8")
+                        ),
+                    },
                     url=end_point,
                     http_method=http_method,
                 )
