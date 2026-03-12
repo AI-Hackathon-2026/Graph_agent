@@ -1,6 +1,5 @@
 import asyncio
 import json
-from logging import getLogger
 
 from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import KafkaError
@@ -23,8 +22,6 @@ langfuse = Langfuse(
     host=langfuse_settings.LANGFUSE_SERVER,
 )
 
-logger = getLogger(__name__)
-
 
 class KafkaHandler:
     def __init__(self):
@@ -39,14 +36,12 @@ class KafkaHandler:
             value_serializer=lambda v: json.dumps(v).encode("utf-8"),
             key_serializer=lambda k: str(k).encode("utf-8"),
         )
-        logger.info(
-            f"Ready to work, consume {kafka_settings.CONSUMER_KAFKA_TOPIC} topic"
-        )
+        print(f"Ready to work, consume {kafka_settings.CONSUMER_KAFKA_TOPIC} topic")
 
     async def main(self):
         await orchestrator_client.start_http_session()
         for msg in self.consumer:
-            logger.info(f"Message received. key: {msg.key}, value: {msg.value}")
+            print(f"Message received. key: {msg.key}, value: {msg.value}")
             match msg.key:
                 case kafka_settings.GET_GRAPH_KEY:
                     request_class = GetGraphsRequest
@@ -93,7 +88,7 @@ class KafkaHandler:
                 key=key,
                 value=value,
             )
-            logger.info(
+            print(
                 f"The message has been sent. topic: {topic}, key: {key}, value: {value}"
             )
             return "The message has been sent"
