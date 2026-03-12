@@ -98,5 +98,6 @@ class KafkaHandler:
 
 if __name__ == "__main__":
     print("ALO")
+
     kafka_handler = KafkaHandler()
     asyncio.run(kafka_handler.main())
