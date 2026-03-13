@@ -13,6 +13,8 @@ from agent.config import application_hosts_setting, kafka_settings, langfuse_set
 from agent.dto import (
     CreateCourseRequest,
     CreateCourseResponse,
+    GetGraphsPreviewRequest,
+    GetGraphsPreviewResponse,
     GetGraphsRequest,
     GetGraphsResponse,
     GetTopicRequest,
@@ -62,6 +64,11 @@ class KafkaHandler:
                     response_class = CreateCourseResponse
                     end_point = "/create_new_course"
                     http_method = "post"
+                case kafka_settings.GET_GRAPH_PREVIEWS_KEY:
+                    request_class = GetGraphsPreviewRequest
+                    response_class = GetGraphsPreviewResponse
+                    end_point = "/create_new_course"
+                    http_method = "get"
                 case _:
                     request_class = None
                     response_class = None

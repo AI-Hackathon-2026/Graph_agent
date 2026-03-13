@@ -18,6 +18,13 @@ class UsersGraphNode(BaseModel):
     next_node_id: str | None
 
 
+class GraphPreview(BaseModel):
+    graph_id: str
+    title: str
+    progress: float
+
+
 class Graph(BaseModel):
     graph_id: str
+    title: str
     nodes: list[UsersGraphNode]

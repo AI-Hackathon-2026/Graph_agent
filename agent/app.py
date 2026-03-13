@@ -8,12 +8,14 @@ from agent.config import application_hosts_setting, langfuse_settings
 from agent.dto import (
     CreateCourseRequest,
     CreateCourseResponse,
+    GetGraphsPreviewRequest,
+    GetGraphsPreviewResponse,
     GetGraphsRequest,
     GetGraphsResponse,
     GetTopicRequest,
     GetTopicResponse,
+    ResponseCodes,
 )
-from agent.dto import ResponseCodes
 
 langfuse = Langfuse(
     secret_key=langfuse_settings.SECRET_KEY,
@@ -31,14 +33,22 @@ class OrchestratorClient:
     @observe(name="request")
     async def request(
         self,
-        request_class: Type[CreateCourseRequest | GetGraphsRequest | GetTopicRequest],
+        request_class: Type[
+            CreateCourseRequest
+            | GetGraphsRequest
+            | GetTopicRequest
+            | GetGraphsPreviewRequest
+        ],
         response_class: Type[
-            CreateCourseResponse | GetGraphsResponse | GetTopicResponse
+            CreateCourseResponse
+            | GetGraphsResponse
+            | GetTopicResponse
+            | GetGraphsPreviewResponse
         ],
         url: str,
         body: dict,
         http_method: str,
-    ) -> CreateCourseResponse | GetGraphsResponse | GetTopicResponse:
+    ) -> CreateCourseResponse | GetGraphsResponse | GetTopicResponse | GetGraphsPreviewResponse:
         try:
             request_class(**body)
         except ValidationError:
@@ -46,7 +56,7 @@ class OrchestratorClient:
                 **{
                     "request_id": body["request_id"],
                     "message": None,
-                    "status": ResponseCodes.BAD_REQUEST
+                    "status": ResponseCodes.BAD_REQUEST,
                 }
             )
 
@@ -68,7 +78,7 @@ class OrchestratorClient:
                 return response
 
         except ValidationError:
-            message = (None,)
+            message = None
             status = ResponseCodes.INTERNAL_ERROR
 
         except TimeoutError:

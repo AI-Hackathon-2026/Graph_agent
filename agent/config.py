@@ -10,6 +10,7 @@ class KafkaSettings(BaseSettings):
     GET_GRAPH_KEY: str = "get_graph"
     GET_TOPIC_KEY: str = "get_topic"
     CREATE_COURSE_KEY: str = "create_course"
+    GET_GRAPH_PREVIEWS_KEY: str = "get_graph_previews"
 
 
 class ApplicationHostsSettings(BaseSettings):
