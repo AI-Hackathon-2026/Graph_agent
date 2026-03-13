@@ -6,6 +6,7 @@ from typing import Any
 from kafka import KafkaConsumer, KafkaProducer
 from kafka.errors import KafkaError
 from langfuse import Langfuse, observe
+from loguru import logger
 
 from agent.app import orchestrator_client
 from agent.config import application_hosts_setting, kafka_settings, langfuse_settings
@@ -37,12 +38,14 @@ class KafkaHandler:
             bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
             key_serializer=lambda k: str(k).encode("utf-8"),
         )
-        print(f"Ready to work, consume {kafka_settings.CONSUMER_KAFKA_TOPIC} topic")
+        logger.info(
+            f"Ready to work, consume {kafka_settings.CONSUMER_KAFKA_TOPIC} topic"
+        )
 
     async def main(self):
         await orchestrator_client.start_http_session()
         for msg in self.consumer:
-            print(f"Message received. key: {msg.key}, value: {msg.value}")
+            logger.info(f"Message received. key: {msg.key}, value: {msg.value}")
             match msg.key:
                 case kafka_settings.GET_GRAPH_KEY:
                     request_class = GetGraphsRequest
@@ -91,7 +94,7 @@ class KafkaHandler:
                 key=key,
                 value=value.encode("utf-8"),
             )
-            print(
+            logger.info(
                 f"The message has been sent. topic: {topic}, key: {key}, value: {value}"
             )
             return "The message has been sent"
@@ -100,6 +103,5 @@ class KafkaHandler:
 
 
 if __name__ == "__main__":
-    print("ALO")
     kafka_handler = KafkaHandler()
     asyncio.run(kafka_handler.main())
