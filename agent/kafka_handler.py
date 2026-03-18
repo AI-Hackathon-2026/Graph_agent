@@ -1,16 +1,20 @@
 import asyncio
+import base64
 import json
-import time
+from typing import Any
 
 from kafka import KafkaConsumer, KafkaProducer
-from kafka.errors import KafkaError, NoBrokersAvailable
+from kafka.errors import KafkaError
 from langfuse import Langfuse, observe
+from loguru import logger
 
 from agent.app import orchestrator_client
 from agent.config import application_hosts_setting, kafka_settings, langfuse_settings
 from agent.dto import (
     CreateCourseRequest,
     CreateCourseResponse,
+    GetGraphsPreviewRequest,
+    GetGraphsPreviewResponse,
     GetGraphsRequest,
     GetGraphsResponse,
     GetTopicRequest,
@@ -26,26 +30,24 @@ langfuse = Langfuse(
 
 class KafkaHandler:
     def __init__(self):
-        while True:
-            try:
-                self.consumer = KafkaConsumer(
-                    kafka_settings.CONSUMER_KAFKA_TOPIC,
-                    bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
-                    value_deserializer=lambda v: json.loads(v.decode("utf-8")),
-                    key_deserializer=lambda k: k.decode("utf-8"),
-                )
-                self.producer = KafkaProducer(
-                    bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
-                    value_serializer=lambda v: json.dumps(v).encode("utf-8"),
-                    key_serializer=lambda k: str(k).encode("utf-8"),
-                )
-                break
-            except NoBrokersAvailable:
-                time.sleep(3)
+        self.consumer = KafkaConsumer(
+            kafka_settings.CONSUMER_KAFKA_TOPIC,
+            bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
+            value_deserializer=lambda v: json.loads(v.decode("utf-8")),
+            key_deserializer=lambda k: k.decode("utf-8"),
+        )
+        self.producer = KafkaProducer(
+            bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
+            key_serializer=lambda k: str(k).encode("utf-8"),
+        )
+        logger.info(
+            f"Ready to work, consume {kafka_settings.CONSUMER_KAFKA_TOPIC} topic"
+        )
 
     async def main(self):
         await orchestrator_client.start_http_session()
         for msg in self.consumer:
+            logger.info(f"Message received. key: {msg.key}, value: {msg.value}")
             match msg.key:
                 case kafka_settings.GET_GRAPH_KEY:
                     request_class = GetGraphsRequest
@@ -62,36 +64,45 @@ class KafkaHandler:
                     response_class = CreateCourseResponse
                     end_point = "/create_new_course"
                     http_method = "post"
+                case kafka_settings.GET_GRAPH_PREVIEWS_KEY:
+                    request_class = GetGraphsPreviewRequest
+                    response_class = GetGraphsPreviewResponse
+                    end_point = "/create_new_course"
+                    http_method = "get"
                 case _:
                     request_class = None
                     response_class = None
                     end_point = ""
                     http_method = ""
-            if response_class is None and response_class is None:
-                value = {
-                    "request_id": msg.value["request_id"],
-                    "message": "Incorrect key in message",
-                }
-            else:
+            if response_class is not None and response_class is not None:
                 value = await orchestrator_client.request(
                     request_class=request_class,
                     response_class=response_class,
-                    body=msg.value,
+                    body={
+                        "request_id": msg.value["request_id"],
+                        "message": json.loads(
+                            base64.b64decode(msg.value["message"]).decode("utf-8")
+                        ),
+                    },
                     url=end_point,
                     http_method=http_method,
                 )
-            print(value.model_dump())
-            await self.send_message(
-                kafka_settings.PRODUCER_KAFKA_TOPIC, msg.key, value.model_dump_json()
-            )
+                await self.send_message(
+                    kafka_settings.PRODUCER_KAFKA_TOPIC,
+                    msg.key,
+                    value.model_dump_json(),
+                )
 
     @observe(name="send_message")
-    async def send_message(self, topic: str, key: str, value: dict) -> None | str:
+    async def send_message(self, topic: str, key: str, value: Any) -> None | str:
         try:
             self.producer.send(
                 topic=topic,
                 key=key,
-                value=value,
+                value=value.encode("utf-8"),
+            )
+            logger.info(
+                f"The message has been sent. topic: {topic}, key: {key}, value: {value}"
             )
             return "The message has been sent"
         except KafkaError as e:

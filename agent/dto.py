@@ -1,7 +1,9 @@
+import enum
+
 from pydantic import BaseModel
 
-from agent.graph import Graph, Topic
-import enum
+from agent.graph import Graph, GraphPreview, Topic
+
 
 class ResponseCodes(enum.Enum):
     OK = 52
@@ -14,7 +16,6 @@ class GraphItem(BaseModel):
 
 
 class TopicItem(BaseModel):
-    graph_id: str
     topic_id: str
 
 
@@ -63,4 +64,15 @@ class UsersGraph(BaseModel):
 class CreateCourseResponse(BaseModel):
     request_id: str
     message: UsersGraph | None
+    status: ResponseCodes
+
+
+class GetGraphsPreviewRequest(BaseModel):
+    request_id: str
+    message: [GraphItem]
+
+
+class GetGraphsPreviewResponse(BaseModel):
+    request_id: str
+    message: list[GraphPreview] | None
     status: ResponseCodes
