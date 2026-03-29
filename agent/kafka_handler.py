@@ -1,4 +1,3 @@
-import asyncio
 import base64
 import json
 from typing import Any
@@ -44,7 +43,7 @@ class KafkaHandler:
             f"Ready to work, consume {kafka_settings.CONSUMER_KAFKA_TOPIC} topic"
         )
 
-    async def main(self):
+    async def consume(self):
         await orchestrator_client.start_http_session()
         for msg in self.consumer:
             logger.info(f"Message received. key: {msg.key}, value: {msg.value}")
@@ -109,6 +108,4 @@ class KafkaHandler:
             return f"Kafka error: {e}"
 
 
-if __name__ == "__main__":
-    kafka_handler = KafkaHandler()
-    asyncio.run(kafka_handler.main())
+kafka_handler = KafkaHandler()

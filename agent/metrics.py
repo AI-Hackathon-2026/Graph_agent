@@ -1,0 +1,79 @@
+import datetime
+import time
+from functools import wraps
+from queue import Queue
+from typing import Type
+
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
+
+from agent.dto import (
+    CreateCourseRequest,
+    GetGraphsPreviewRequest,
+    GetGraphsRequest,
+    GetTopicRequest,
+)
+from agent.main import metrics_collector
+from agent.sql_models import (
+    CreateCourseMetric,
+    GetGraphsMetric,
+    GetGraphsPreviewMetric,
+    GetTopicMetric,
+    Metric,
+)
+
+
+class MetricsCollector:
+    def __init__(self, engine: AsyncEngine):
+        self.metrics_queue = Queue(maxsize=1000)
+        self.engine = engine
+        self.async_session_maker = async_sessionmaker(
+            bind=engine, class_=AsyncSession, expire_on_commit=False
+        )
+
+    def add_metric_to_queue(self, metric: Metric):
+        self.metrics_queue.put(metric)
+
+    async def write_metrics(self):
+        pass
+
+
+def metrics(foo):
+    @wraps(foo)
+    async def wrapper(*args, **kwargs):
+        start = time.time()
+        result = await foo(*args, **kwargs)
+        end = time.time()
+
+        exec_time = end - start
+        date_time = datetime.datetime.now(datetime.UTC)
+
+        request_class: Type = args[0]
+        body: dict = args[3]
+        request = request_class(**body)
+
+        match request_class:
+            case GetTopicRequest():
+                metric = GetTopicMetric(topic_id=request.message.topic_id)
+            case GetGraphsRequest():
+                graph_ids = [graph.graph_id for graph in request.message]
+                metric = GetGraphsMetric(graph_ids=graph_ids)
+            case GetGraphsPreviewRequest():
+                graph_ids = [graph.graph_id for graph in request.message]
+                metric = GetGraphsPreviewMetric(graph_ids=graph_ids)
+            case CreateCourseRequest():
+                metric = CreateCourseMetric(
+                    username=request.message.username, graph_id=result.message.graph_id
+                )
+            case _:
+                return result
+        metric.exec_time, metric.date_time, metric.status = (
+            exec_time,
+            date_time,
+            result.status.name,
+        )
+
+        metrics_collector.add_metric_to_queue(metric)
+
+        return result
+
+    return wrapper

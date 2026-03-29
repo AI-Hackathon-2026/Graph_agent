@@ -2,6 +2,7 @@ from typing import Any, Callable, Type, cast
 
 import aiohttp
 from langfuse import Langfuse, observe
+from metrics import metrics
 from pydantic import ValidationError
 
 from agent.config import application_hosts_setting, langfuse_settings
@@ -30,6 +31,7 @@ class OrchestratorClient:
     async def start_http_session(self):
         self.session = aiohttp.ClientSession()
 
+    @metrics
     @observe(name="request")
     async def request(
         self,

@@ -13,6 +13,15 @@ class KafkaSettings(BaseSettings):
     GET_GRAPH_PREVIEWS_KEY: str = "get_graph_previews"
 
 
+class PostgresSettings(BaseSettings):
+    HOST: str = "postgres"
+    PORT: int = 5432
+    USER: str = "graph_agent"
+    DATABASE: str = "metrics_db"
+    PASSWORD: str = os.environ.get("POSTGRES_PASSWORD")
+    URL: str = f"postgresql+asyncpg://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}"
+
+
 class ApplicationHostsSettings(BaseSettings):
     BOOTSTRAP_SERVER: str = "kafka:9092"
     ORCHESTRATOR_SERVER: str = "http://orchestrator:8067"
