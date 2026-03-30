@@ -7,7 +7,8 @@ from time import sleep
 import psutil
 from typing import Type
 from collections import deque
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
+from agent.config import postgres_settings
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
 from agent.dto import (
     CreateCourseRequest,
@@ -15,7 +16,6 @@ from agent.dto import (
     GetGraphsRequest,
     GetTopicRequest,
 )
-from agent.main import metrics_collector
 from agent.sql_models import (
     CreateCourseMetric,
     GetGraphsMetric,
@@ -57,6 +57,8 @@ class MetricsCollector:
                 while self.cpu_load_avg < 70 and self.mem_load < 75 and not self.metrics_queue.empty():
                     session.add(self.metrics_queue.get())
                 await session.commit()
+
+metrics_collector = MetricsCollector(create_async_engine(postgres_settings.URL))
 
 
 def metrics(foo):

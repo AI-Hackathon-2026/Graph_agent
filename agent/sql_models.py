@@ -1,4 +1,4 @@
-from sqlalchemy import ARRAY, Column, DateTime, Float, String
+from sqlalchemy import ARRAY, Column, DateTime, Float, String, Integer
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import declarative_base
 
@@ -7,7 +7,7 @@ Base = declarative_base()
 
 class Metric(Base):
     __abstract__ = True
-
+    id = Column(Integer, primary_key=True, autoincrement=True)
     date_time = Column(DateTime, nullable=False)
     exec_time = Column(Float, nullable=False)
     status = Column(String(20), nullable=False)
