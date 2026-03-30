@@ -14,8 +14,8 @@ class KafkaSettings(BaseSettings):
 
 
 class PostgresSettings(BaseSettings):
-    HOST: str = "postgres"
-    PORT: int = 5432
+    HOST: str = "127.0.0.1"
+    PORT: int = 5431
     USER: str = "metrics_writer"
     DATABASE: str = "metrics_db"
     PASSWORD: str = os.environ.get("POSTGRES_PASSWORD")
@@ -23,8 +23,8 @@ class PostgresSettings(BaseSettings):
 
 
 class ApplicationHostsSettings(BaseSettings):
-    BOOTSTRAP_SERVER: str = "kafka:9092"
-    ORCHESTRATOR_SERVER: str = "http://orchestrator:8067"
+    BOOTSTRAP_SERVER: str = "127.0.0.1:9092"
+    ORCHESTRATOR_SERVER: str = "http://127.0.0.1:8067"
 
 
 class LangfuseSettings(BaseSettings):
@@ -36,3 +36,4 @@ class LangfuseSettings(BaseSettings):
 langfuse_settings = LangfuseSettings()
 application_hosts_setting = ApplicationHostsSettings()
 kafka_settings = KafkaSettings()
+postgres_settings = PostgresSettings()

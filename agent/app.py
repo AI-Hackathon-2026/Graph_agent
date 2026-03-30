@@ -2,7 +2,6 @@ from typing import Any, Callable, Type, cast
 
 import aiohttp
 from langfuse import Langfuse, observe
-from metrics import metrics
 from pydantic import ValidationError
 
 from agent.config import application_hosts_setting, langfuse_settings
@@ -17,6 +16,7 @@ from agent.dto import (
     GetTopicResponse,
     ResponseCodes,
 )
+from agent.main import metrics_collector
 
 langfuse = Langfuse(
     secret_key=langfuse_settings.SECRET_KEY,
@@ -31,7 +31,7 @@ class OrchestratorClient:
     async def start_http_session(self):
         self.session = aiohttp.ClientSession()
 
-    @metrics
+    @metrics_collector.metrics
     @observe(name="request")
     async def request(
         self,

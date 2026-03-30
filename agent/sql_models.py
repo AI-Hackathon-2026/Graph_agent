@@ -1,4 +1,5 @@
-from sqlalchemy import ARRAY, Column, DateTime, Float, String, Integer
+from loguru import logger
+from sqlalchemy import ARRAY, Column, DateTime, Float, Integer, String
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import declarative_base
 
@@ -8,7 +9,7 @@ Base = declarative_base()
 class Metric(Base):
     __abstract__ = True
     id = Column(Integer, primary_key=True, autoincrement=True)
-    date_time = Column(DateTime, nullable=False)
+    date_time = Column(DateTime(timezone=True), nullable=False)
     exec_time = Column(Float, nullable=False)
     status = Column(String(20), nullable=False)
 
@@ -56,3 +57,4 @@ class GetGraphsPreviewMetric(Metric):
 async def init_db(engine: AsyncEngine):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        logger.info("database init is ended")

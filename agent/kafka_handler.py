@@ -2,7 +2,7 @@ import base64
 import json
 from typing import Any
 
-from kafka import KafkaConsumer, KafkaProducer
+from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from kafka.errors import KafkaError
 from langfuse import Langfuse, observe
 from loguru import logger
@@ -29,13 +29,13 @@ langfuse = Langfuse(
 
 class KafkaHandler:
     def __init__(self):
-        self.consumer = KafkaConsumer(
+        self.consumer = AIOKafkaConsumer(
             kafka_settings.CONSUMER_KAFKA_TOPIC,
             bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
             value_deserializer=lambda v: json.loads(v.decode("utf-8")),
             key_deserializer=lambda k: k.decode("utf-8"),
         )
-        self.producer = KafkaProducer(
+        self.producer = AIOKafkaProducer(
             bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
             key_serializer=lambda k: str(k).encode("utf-8"),
         )
@@ -44,8 +44,11 @@ class KafkaHandler:
         )
 
     async def consume(self):
+        await self.consumer.start()
+        await self.producer.start()
         await orchestrator_client.start_http_session()
-        for msg in self.consumer:
+
+        async for msg in self.consumer:
             logger.info(f"Message received. key: {msg.key}, value: {msg.value}")
             match msg.key:
                 case kafka_settings.GET_GRAPH_KEY:
@@ -92,10 +95,13 @@ class KafkaHandler:
                     value.model_dump_json(),
                 )
 
+        await self.consumer.stop()
+        await self.producer.stop()
+
     @observe(name="send_message")
     async def send_message(self, topic: str, key: str, value: Any) -> None | str:
         try:
-            self.producer.send(
+            await self.producer.send(
                 topic=topic,
                 key=key,
                 value=value.encode("utf-8"),
@@ -103,9 +109,7 @@ class KafkaHandler:
             logger.info(
                 f"The message has been sent. topic: {topic}, key: {key}, value: {value}"
             )
+            await self.producer.flush()
             return "The message has been sent"
         except KafkaError as e:
             return f"Kafka error: {e}"
-
-
-kafka_handler = KafkaHandler()
