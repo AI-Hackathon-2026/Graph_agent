@@ -2,8 +2,11 @@ import datetime
 import time
 from functools import wraps
 from queue import Queue
-from typing import Type
+from time import sleep
 
+import psutil
+from typing import Type
+from collections import deque
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from agent.dto import (
@@ -26,6 +29,8 @@ class MetricsCollector:
     def __init__(self, engine: AsyncEngine):
         self.metrics_queue = Queue(maxsize=1000)
         self.engine = engine
+        self.cpu_load = deque()
+        self.mem_load = 0.0
         self.async_session_maker = async_sessionmaker(
             bind=engine, class_=AsyncSession, expire_on_commit=False
         )
@@ -33,8 +38,25 @@ class MetricsCollector:
     def add_metric_to_queue(self, metric: Metric):
         self.metrics_queue.put(metric)
 
+    @property
+    def cpu_load_avg(self) -> float:
+        return sum(self.cpu_load) / len(self.cpu_load)
+
+    def load_check(self):
+        while True:
+            self.cpu_load.append(psutil.cpu_percent(interval=None))
+            if len(self.cpu_load) > 5:
+                self.cpu_load.pop()
+            self.mem_load = psutil.virtual_memory().percent
+            sleep(0.1)
+
     async def write_metrics(self):
-        pass
+        self.load_check()
+        async with self.async_session_maker() as session:
+            while True:
+                while self.cpu_load_avg < 70 and self.mem_load < 75 and not self.metrics_queue.empty():
+                    session.add(self.metrics_queue.get())
+                await session.commit()
 
 
 def metrics(foo):
