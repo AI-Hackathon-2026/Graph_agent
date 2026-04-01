@@ -15,7 +15,7 @@ class KafkaSettings(BaseSettings):
 
 class PostgresSettings(BaseSettings):
     HOST: str = "127.0.0.1"
-    PORT: int = 5431
+    PORT: int = 5432
     USER: str = "metrics_writer"
     DATABASE: str = "metrics_db"
     PASSWORD: str = os.environ.get("POSTGRES_PASSWORD")

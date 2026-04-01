@@ -69,7 +69,7 @@ class KafkaHandler:
                 case kafka_settings.GET_GRAPH_PREVIEWS_KEY:
                     request_class = GetGraphsPreviewRequest
                     response_class = GetGraphsPreviewResponse
-                    end_point = "/create_new_course"
+                    end_point = "/get_graph_previews"
                     http_method = "get"
                 case _:
                     request_class = None

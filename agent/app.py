@@ -1,10 +1,9 @@
 from typing import Any, Callable, Type, cast
 
 import aiohttp
-from langfuse import Langfuse, observe
 from pydantic import ValidationError
 
-from agent.config import application_hosts_setting, langfuse_settings
+from agent.config import application_hosts_setting
 from agent.dto import (
     CreateCourseRequest,
     CreateCourseResponse,
@@ -18,12 +17,6 @@ from agent.dto import (
 )
 from agent.main import metrics_collector
 
-langfuse = Langfuse(
-    secret_key=langfuse_settings.SECRET_KEY,
-    public_key=langfuse_settings.PUBLIC_KEY,
-    host=langfuse_settings.LANGFUSE_SERVER,
-)
-
 
 class OrchestratorClient:
     session: aiohttp.ClientSession
@@ -32,7 +25,6 @@ class OrchestratorClient:
         self.session = aiohttp.ClientSession()
 
     @metrics_collector.metrics
-    @observe(name="request")
     async def request(
         self,
         request_class: Type[

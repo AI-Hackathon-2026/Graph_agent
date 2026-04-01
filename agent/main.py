@@ -1,14 +1,7 @@
 import asyncio
 
-from metrics import LoadMonitor, MetricsCollector
-from sqlalchemy.ext.asyncio import create_async_engine
-
-from agent.config import postgres_settings
+from agent.metrics import metrics_collector, psg_engine
 from agent.sql_models import init_db
-
-psg_engine = create_async_engine(postgres_settings.URL)
-load_monitor = LoadMonitor()
-metrics_collector = MetricsCollector(psg_engine, load_monitor)
 
 
 async def main():

@@ -8,8 +8,14 @@ from typing import Type
 
 import psutil
 from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
+from agent.config import postgres_settings
 from agent.dto import (
     CreateCourseRequest,
     GetGraphsPreviewRequest,
@@ -55,16 +61,18 @@ class MetricsCollector:
 
     async def add_metric_to_queue(self, metric: Metric):
         await self.metrics_queue.put(metric)
+        logger.info(f"Added to queue: {str(metric)}")
 
     async def write_metrics(self):
         logger.info("Metrics writer started")
         async with self.async_session_maker() as session:
             while True:
-                metric = await self.metrics_queue.get()
-                if (
+                while (
                     self.load_monitor.cpu_load_avg < 70
                     and self.load_monitor.mem_load < 75
                 ):
+                    metric = await self.metrics_queue.get()
+                    logger.info(f"Get metric {str(metric)}")
                     session.add(metric)
                     await session.commit()
                     logger.info("Metric saved")
@@ -79,8 +87,8 @@ class MetricsCollector:
 
             exec_time = end - start
             date_time = datetime.datetime.now(datetime.UTC)
-            request_class: Type = args[0]
-            body: dict = args[3]
+            request_class: Type = kwargs["request_class"]
+            body: dict = kwargs["body"]
             request = request_class(**body)
 
             if isinstance(request, GetTopicRequest):
@@ -109,3 +117,8 @@ class MetricsCollector:
             return result
 
         return wrapper
+
+
+psg_engine = create_async_engine(postgres_settings.URL)
+load_monitor = LoadMonitor()
+metrics_collector = MetricsCollector(psg_engine, load_monitor)
