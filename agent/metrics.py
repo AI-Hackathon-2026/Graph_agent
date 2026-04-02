@@ -67,15 +67,21 @@ class MetricsCollector:
         logger.info("Metrics writer started")
         async with self.async_session_maker() as session:
             while True:
+                processed = False
                 while (
-                    self.load_monitor.cpu_load_avg < 70
-                    and self.load_monitor.mem_load < 75
+                    self.load_monitor.cpu_load_avg < 85
+                    and self.load_monitor.mem_load < 85
+                    and not self.metrics_queue.empty()
                 ):
                     metric = await self.metrics_queue.get()
                     logger.info(f"Get metric {str(metric)}")
                     session.add(metric)
                     await session.commit()
+                    processed = True
                     logger.info("Metric saved")
+
+                if not processed:
+                    await asyncio.sleep(0.01)
 
     def metrics(self, foo):
         @wraps(foo)

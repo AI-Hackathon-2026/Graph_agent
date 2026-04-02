@@ -5,18 +5,22 @@ from agent.sql_models import init_db
 
 
 async def main():
-    from agent.kafka_handler import KafkaHandler
+    from agent.kafka_handler import kafka_handler
 
-    kafka_handler = KafkaHandler()
-
-    await asyncio.gather(
-        init_db(psg_engine),
+    tasks = [
+        asyncio.create_task(init_db(psg_engine)),
         metrics_collector.write_metrics(),
         kafka_handler.consume(),
         metrics_collector.load_monitor.load_check(),
-    )
-    await kafka_handler.consumer.stop()
-    await kafka_handler.producer.stop()
+    ]
+    try:
+        await asyncio.gather(*tasks)
+    except KeyboardInterrupt:
+        pass
+    for task in tasks:
+        task.cancel()
+
+    await asyncio.gather(*tasks, return_exceptions=True)
 
 
 if __name__ == "__main__":
