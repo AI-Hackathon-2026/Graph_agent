@@ -24,6 +24,9 @@ class OrchestratorClient:
     async def start_http_session(self):
         self.session = aiohttp.ClientSession()
 
+    async def close_http_session(self):
+        await self.session.close()
+
     @metrics_collector.metrics
     async def request(
         self,
