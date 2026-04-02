@@ -1,25 +1,21 @@
 from typing import Any, Callable, Type, cast
 
 import aiohttp
-from langfuse import Langfuse, observe
 from pydantic import ValidationError
 
-from agent.config import application_hosts_setting, langfuse_settings
+from agent.config import application_hosts_setting
 from agent.dto import (
     CreateCourseRequest,
     CreateCourseResponse,
+    GetGraphsPreviewRequest,
+    GetGraphsPreviewResponse,
     GetGraphsRequest,
     GetGraphsResponse,
     GetTopicRequest,
     GetTopicResponse,
+    ResponseCodes,
 )
-from agent.dto import ResponseCodes
-
-langfuse = Langfuse(
-    secret_key=langfuse_settings.SECRET_KEY,
-    public_key=langfuse_settings.PUBLIC_KEY,
-    host=langfuse_settings.LANGFUSE_SERVER,
-)
+from agent.main import metrics_collector
 
 
 class OrchestratorClient:
@@ -28,17 +24,28 @@ class OrchestratorClient:
     async def start_http_session(self):
         self.session = aiohttp.ClientSession()
 
-    @observe(name="request")
+    async def close_http_session(self):
+        await self.session.close()
+
+    @metrics_collector.metrics
     async def request(
         self,
-        request_class: Type[CreateCourseRequest | GetGraphsRequest | GetTopicRequest],
+        request_class: Type[
+            CreateCourseRequest
+            | GetGraphsRequest
+            | GetTopicRequest
+            | GetGraphsPreviewRequest
+        ],
         response_class: Type[
-            CreateCourseResponse | GetGraphsResponse | GetTopicResponse
+            CreateCourseResponse
+            | GetGraphsResponse
+            | GetTopicResponse
+            | GetGraphsPreviewResponse
         ],
         url: str,
         body: dict,
         http_method: str,
-    ) -> CreateCourseResponse | GetGraphsResponse | GetTopicResponse:
+    ) -> CreateCourseResponse | GetGraphsResponse | GetTopicResponse | GetGraphsPreviewResponse:
         try:
             request_class(**body)
         except ValidationError:
@@ -46,7 +53,7 @@ class OrchestratorClient:
                 **{
                     "request_id": body["request_id"],
                     "message": None,
-                    "status": ResponseCodes.BAD_REQUEST
+                    "status": ResponseCodes.BAD_REQUEST,
                 }
             )
 
@@ -68,7 +75,7 @@ class OrchestratorClient:
                 return response
 
         except ValidationError:
-            message = (None,)
+            message = None
             status = ResponseCodes.INTERNAL_ERROR
 
         except TimeoutError:

@@ -11,4 +11,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 WORKDIR /app
 COPY /agent /app/agent
 EXPOSE 6767
-CMD ["python", "-m", "agent.kafka_handler"]
+CMD ["python", "-m", "agent.main"]

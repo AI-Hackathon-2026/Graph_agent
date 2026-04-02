@@ -9,16 +9,6 @@ class Topic(BaseModel):
     topic_content: str
 
 
-class GraphNode(BaseModel):
-    node_id: str
-    graph_id: str
-    topic_id: str
-    is_studied: bool
-    is_major: bool
-    prev_node_id: str | None
-    next_node_id: str | None
-
-
 class UsersGraphNode(BaseModel):
     node_id: str
     topic_id: str
@@ -28,6 +18,13 @@ class UsersGraphNode(BaseModel):
     next_node_id: str | None
 
 
+class GraphPreview(BaseModel):
+    graph_id: str
+    title: str
+    progress: float
+
+
 class Graph(BaseModel):
     graph_id: str
+    title: str
     nodes: list[UsersGraphNode]
