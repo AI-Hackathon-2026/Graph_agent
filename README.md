@@ -8,4 +8,4 @@ Clone repository, run docker build and run container with env's values
 
 ### env's values:
 
-LANGFUSE_SECRET_KEY, LANGFUSE_PUBLIC_KEY
+POSTGRES_PASSWORD

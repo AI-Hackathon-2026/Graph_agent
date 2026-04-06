@@ -3,3 +3,4 @@ agent/tmp2.py
 .idea/
 agent/__pycache__/
 .env
+venv

@@ -13,17 +13,20 @@ class KafkaSettings(BaseSettings):
     GET_GRAPH_PREVIEWS_KEY: str = "get_graph_previews"
 
 
+class PostgresSettings(BaseSettings):
+    HOST: str = "postgres"
+    PORT: int = 5432
+    USER: str = "metrics_writer"
+    DATABASE: str = "metrics_db"
+    PASSWORD: str = os.environ.get("POSTGRES_PASSWORD")
+    URL: str = f"postgresql+asyncpg://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}"
+
+
 class ApplicationHostsSettings(BaseSettings):
     BOOTSTRAP_SERVER: str = "kafka:9092"
     ORCHESTRATOR_SERVER: str = "http://orchestrator:8067"
 
 
-class LangfuseSettings(BaseSettings):
-    SECRET_KEY: str = os.environ.get("LANGFUSE_SECRET_KEY")
-    PUBLIC_KEY: str = os.environ.get("LANGFUSE_PUBLIC_KEY")
-    LANGFUSE_SERVER: str = "https://cloud.langfuse.com"
-
-
-langfuse_settings = LangfuseSettings()
 application_hosts_setting = ApplicationHostsSettings()
 kafka_settings = KafkaSettings()
+postgres_settings = PostgresSettings()

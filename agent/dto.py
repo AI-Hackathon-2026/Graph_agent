@@ -69,7 +69,7 @@ class CreateCourseResponse(BaseModel):
 
 class GetGraphsPreviewRequest(BaseModel):
     request_id: str
-    message: [GraphItem]
+    message: list[GraphItem]
 
 
 class GetGraphsPreviewResponse(BaseModel):
