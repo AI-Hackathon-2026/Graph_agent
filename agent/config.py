@@ -16,7 +16,7 @@ class KafkaSettings(BaseSettings):
 class PostgresSettings(BaseSettings):
     HOST: str = "postgres"
     PORT: int = 5432
-    USER: str = "metrics_writer"
+    USER: str = "postgres"
     DATABASE: str = "metrics_db"
     PASSWORD: str = os.environ.get("POSTGRES_PASSWORD")
     URL: str = f"postgresql+asyncpg://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}"
