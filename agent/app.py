@@ -60,6 +60,7 @@ class OrchestratorClient:
         method_mapping = {
             "get": self.session.get,
             "post": self.session.post,
+            "patch": self.session.patch,
         }
         try:
             session_method = cast(

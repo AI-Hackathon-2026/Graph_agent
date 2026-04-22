@@ -18,6 +18,8 @@ from agent.dto import (
     GetGraphsResponse,
     GetTopicRequest,
     GetTopicResponse,
+    SetNodeAsEndedRequest,
+    SetNodeAsEndedResponse,
 )
 
 
@@ -75,6 +77,11 @@ class KafkaHandler:
                         response_class = GetGraphsPreviewResponse
                         end_point = "/get_graph_previews"
                         http_method = "get"
+                    case kafka_settings.SET_NODE_AS_ENDED:
+                        request_class = SetNodeAsEndedRequest
+                        response_class = SetNodeAsEndedResponse
+                        end_point = "/set_node_as_ended"
+                        http_method = "patch"
                     case _:
                         request_class = None
                         response_class = None

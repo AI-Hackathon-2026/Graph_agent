@@ -86,7 +86,6 @@ class MetricsCollector:
     def metrics(self, foo):
         @wraps(foo)
         async def wrapper(*args, **kwargs):
-            print(kwargs)
             start = time.time()
             result = await foo(*args, **kwargs)
             end = time.time()
@@ -110,6 +109,7 @@ class MetricsCollector:
                     username=request.message.username, graph_id=result.message.graph_id
                 )
             else:
+                logger.warning("Unsupported request type")
                 return result
 
             metric.exec_time, metric.date_time, metric.status = (

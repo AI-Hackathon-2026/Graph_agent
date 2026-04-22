@@ -11,6 +11,7 @@ class KafkaSettings(BaseSettings):
     GET_TOPIC_KEY: str = "get_topic"
     CREATE_COURSE_KEY: str = "create_course"
     GET_GRAPH_PREVIEWS_KEY: str = "get_graph_previews"
+    SET_NODE_AS_ENDED: str = "set_node_as_ended"
 
 
 class PostgresSettings(BaseSettings):
