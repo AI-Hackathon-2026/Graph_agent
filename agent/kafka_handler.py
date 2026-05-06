@@ -1,4 +1,3 @@
-import base64
 import json
 from asyncio import CancelledError
 from typing import Any
@@ -93,9 +92,7 @@ class KafkaHandler:
                         response_class=response_class,
                         body={
                             "request_id": msg.value["request_id"],
-                            "message": json.loads(
-                                base64.b64decode(msg.value["message"]).decode("utf-8")
-                            ),
+                            "message": msg.value["message"],
                         },
                         url=end_point,
                         http_method=http_method,
