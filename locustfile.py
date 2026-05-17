@@ -21,7 +21,7 @@ class MyUser(HttpUser):
     def get_graph(self):
         payload = GetGraphsRequest(
             request_id=str(uuid4()),
-            message=[GraphItem(graph_id="69f856935180c24f271d42c0")],
+            message=[GraphItem(graph_id="69f8dc79c95f66b9b599e729")],
         ).model_dump()
         self.client.get("/get_graph", json=payload)
 
@@ -29,7 +29,7 @@ class MyUser(HttpUser):
     def get_topic(self):
         payload = GetTopicRequest(
             request_id=str(uuid4()),
-            message=TopicItem(topic_id="69f856835180c24f271d42b9"),
+            message=TopicItem(topic_id="69ea30e38010e3a57057d6a7"),
         ).model_dump()
         self.client.get("/get_topic", json=payload)
 
@@ -47,7 +47,7 @@ class MyUser(HttpUser):
     def get_graph_previews(self):
         payload = GetGraphsPreviewRequest(
             request_id=str(uuid4()),
-            message=[GraphItem(graph_id="69f856935180c24f271d42c0")],
+            message=[GraphItem(graph_id="69f8dc79c95f66b9b599e729")],
         ).model_dump()
         self.client.get("/get_graph_previews", json=payload)
 
@@ -55,6 +55,6 @@ class MyUser(HttpUser):
     def set_node_as_ended(self):
         payload = SetNodeAsEndedRequest(
             request_id=str(uuid4()),
-            message=NodeItem(node_id="69f856935180c24f271d42c1"),
+            message=NodeItem(node_id="69ea263ef5c1e6cbd9373a7c"),
         ).model_dump()
         self.client.patch("/set_node_as_ended", json=payload)

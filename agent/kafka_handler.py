@@ -1,12 +1,11 @@
+import asyncio
 import json
 from asyncio import CancelledError
-from typing import Any
 
-from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
-from aiokafka.errors import KafkaError
+from aiokafka import AIOKafkaConsumer
 from loguru import logger
 
-from agent.app import orchestrator_client
+from agent.app import OrchestratorClient
 from agent.config import application_hosts_setting, kafka_settings
 from agent.dto import (
     CreateCourseRequest,
@@ -23,36 +22,27 @@ from agent.dto import (
 
 
 class KafkaHandler:
-    def __init__(self):
+    def __init__(self, orc_client: OrchestratorClient):
+        self.orc_client = orc_client
         self.consumer = AIOKafkaConsumer(
             kafka_settings.CONSUMER_KAFKA_TOPIC,
             bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
             value_deserializer=lambda v: json.loads(v.decode("utf-8")),
             key_deserializer=lambda k: k.decode("utf-8"),
         )
-        self.producer = AIOKafkaProducer(
-            bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
-            key_serializer=lambda k: str(k).encode("utf-8"),
-        )
 
     async def start(self):
         await self.consumer.start()
-        await self.producer.start()
-        await orchestrator_client.start_http_session()
         logger.info(
             f"Kafka is started, consume {kafka_settings.CONSUMER_KAFKA_TOPIC} topic"
         )
 
     async def stop(self):
-        await self.producer.flush()
         await self.consumer.stop()
-        await self.producer.stop()
-        await orchestrator_client.close_http_session()
 
     async def consume(self):
         try:
             await self.start()
-
             async for msg in self.consumer:
                 logger.info(f"Message received. key: {msg.key}, value: {msg.value}")
                 match msg.key:
@@ -87,39 +77,19 @@ class KafkaHandler:
                         end_point = ""
                         http_method = ""
                 if response_class is not None and response_class is not None:
-                    value = await orchestrator_client.request(
-                        request_class=request_class,
-                        response_class=response_class,
-                        body={
-                            "request_id": msg.value["request_id"],
-                            "message": msg.value["message"],
-                        },
-                        url=end_point,
-                        http_method=http_method,
-                    )
-                    await self.send_message(
-                        kafka_settings.PRODUCER_KAFKA_TOPIC,
-                        msg.key,
-                        value.model_dump_json(),
+                    asyncio.create_task(
+                        self.orc_client.request(
+                            request_class=request_class,
+                            response_class=response_class,
+                            body={
+                                "request_id": msg.value["request_id"],
+                                "message": msg.value["message"],
+                            },
+                            url=end_point,
+                            http_method=http_method,
+                            key=msg.key,
+                        )
                     )
         except CancelledError:
             await self.stop()
             logger.info("Kafka is canceled")
-
-    async def send_message(self, topic: str, key: str, value: Any) -> None | str:
-        try:
-            await self.producer.send(
-                topic=topic,
-                key=key,
-                value=value.encode("utf-8"),
-            )
-            logger.info(
-                f"The message has been sent. topic: {topic}, key: {key}, value: {value}"
-            )
-            await self.producer.flush()
-            return "The message has been sent"
-        except KafkaError as e:
-            return f"Kafka error: {e}"
-
-
-kafka_handler = KafkaHandler()

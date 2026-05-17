@@ -25,7 +25,7 @@ class Kafka:
             bootstrap_servers=application_hosts_setting.BOOTSTRAP_SERVER,
             key_serializer=lambda k: str(k).encode("utf-8"),
         )
-        self.requests = {}
+        self.requests: dict[str, asyncio.Event] = {}
 
     async def start(self):
         await self.producer.start()
@@ -38,7 +38,7 @@ class Kafka:
 
     async def consume(self):
         async for msg in self.consumer:
-            self.requests[msg.value["request_id"]] = False
+            self.requests[msg.value["request_id"]].set()
 
 
 @asynccontextmanager
