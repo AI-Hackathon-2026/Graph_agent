@@ -1,17 +1,19 @@
 import asyncio
 
-from agent.metrics import metrics_collector, psg_engine
-from agent.sql_models import init_db
+from agent.app import OrchestratorClient
+from agent.kafka_handler import KafkaHandler
+from agent.kafka_producer import KafkaProducer
 
 
 async def main():
-    from agent.kafka_handler import kafka_handler
+    producer = KafkaProducer()
+    app = OrchestratorClient(producer)
+    handler = KafkaHandler(app)
 
     tasks = [
-        asyncio.create_task(init_db(psg_engine)),
-        metrics_collector.write_metrics(),
-        kafka_handler.consume(),
-        metrics_collector.load_monitor.load_check(),
+        producer.start(),
+        app.start_http_session(),
+        handler.consume(),
     ]
     try:
         await asyncio.gather(*tasks)

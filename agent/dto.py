@@ -76,3 +76,18 @@ class GetGraphsPreviewResponse(BaseModel):
     request_id: str
     message: list[GraphPreview] | None
     status: ResponseCodes
+
+
+class NodeItem(BaseModel):
+    node_id: str
+
+
+class SetNodeAsEndedRequest(BaseModel):
+    request_id: str
+    message: NodeItem
+
+
+class SetNodeAsEndedResponse(BaseModel):
+    request_id: str
+    message: None
+    status: ResponseCodes

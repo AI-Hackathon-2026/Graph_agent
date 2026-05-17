@@ -11,12 +11,13 @@ class KafkaSettings(BaseSettings):
     GET_TOPIC_KEY: str = "get_topic"
     CREATE_COURSE_KEY: str = "create_course"
     GET_GRAPH_PREVIEWS_KEY: str = "get_graph_previews"
+    SET_NODE_AS_ENDED: str = "set_node_as_ended"
 
 
 class PostgresSettings(BaseSettings):
     HOST: str = "postgres"
-    PORT: int = 5431
-    USER: str = "metrics_writer"
+    PORT: int = 5432
+    USER: str = "postgres"
     DATABASE: str = "metrics_db"
     PASSWORD: str = os.environ.get("POSTGRES_PASSWORD")
     URL: str = f"postgresql+asyncpg://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}"
