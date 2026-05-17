@@ -34,7 +34,6 @@ class OrchestratorClient:
     async def close_http_session(self):
         await self.session.close()
 
-    # @metrics_collector.metrics
     async def request(
         self,
         request_class: Type[

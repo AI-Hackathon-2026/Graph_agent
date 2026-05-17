@@ -11,12 +11,9 @@ async def main():
     handler = KafkaHandler(app)
 
     tasks = [
-        # asyncio.create_task(init_db(psg_engine)),
-        # metrics_collector.write_metrics(),
         producer.start(),
         app.start_http_session(),
         handler.consume(),
-        # metrics_collector.load_monitor.load_check(),
     ]
     try:
         await asyncio.gather(*tasks)
