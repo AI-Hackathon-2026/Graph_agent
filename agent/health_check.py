@@ -3,7 +3,8 @@ import sys
 import aiohttp
 from aiohttp import TCPConnector
 from aiokafka import AIOKafkaProducer
-from config import application_hosts_setting
+
+from agent.config import application_hosts_setting
 
 connector = TCPConnector(limit=2000)
 session = aiohttp.ClientSession(connector=connector)
@@ -15,11 +16,11 @@ async def check_kafka() -> bool:
     )
     try:
         await producer.start()
+        await producer.stop()
         return True
     except Exception:
-        return False
-    finally:
         await producer.stop()
+        return False
 
 
 async def check_orchestrator() -> bool:
