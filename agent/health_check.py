@@ -3,7 +3,8 @@ import sys
 import aiohttp
 from aiohttp import TCPConnector
 from aiokafka import AIOKafkaProducer
-from config import application_hosts_setting
+
+from agent.config import application_hosts_setting
 
 connector = TCPConnector(limit=2000)
 session = aiohttp.ClientSession(connector=connector)
